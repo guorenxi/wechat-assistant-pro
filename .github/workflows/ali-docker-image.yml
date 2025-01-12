@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Ali Docker Image CI
 
 on:
   push:
@@ -8,7 +8,10 @@ on:
 
 env:
   # 设置 docker 镜像名
-  IMAGE_NAME: aibotk/wechat-assistant
+  DOCKERHUB_USER: ${{ secrets.ALI_DOCKERHUB_USER }}
+  DOCKERHUB_TOKEN: ${{ secrets.ALI_DOCKERHUB_TOKEN }}
+  DOCKERHUB_REGISTRY: ${{ secrets.ALI_DOCKERHUB_REGISTRY }}
+  IMAGE_NAME: registry.cn-hangzhou.aliyuncs.com/aibotk/wechat-assistant
 
 jobs:
 
@@ -18,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Log into registry
-        run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u aibotk --password-stdin
+        run: echo "${{ env.DOCKERHUB_TOKEN }}" | docker login ${{ env.DOCKERHUB_REGISTRY }} -u ${{ env.DOCKERHUB_USER }} --password-stdin
       - name: Get the version
         id: vars
         run: echo ::set-output name=tag::$(echo ${GITHUB_REF:10})
@@ -27,4 +30,4 @@ jobs:
       - name: Enable Docker Buildx
         run: docker buildx use mybuilder
       - name: Build and push
-        run: docker buildx build --platform linux/amd64,linux/arm64/v8,linux/arm/v7 -t ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }} -t ${{ env.IMAGE_NAME }}:latest . --push
+        run: ls & docker buildx build . --file Dockerfile --platform linux/amd64,linux/arm64/v8,linux/arm/v7 -t ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }} -t ${{ env.IMAGE_NAME }}:latest --push
